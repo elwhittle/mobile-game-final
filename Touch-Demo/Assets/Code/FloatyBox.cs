@@ -20,17 +20,6 @@ public class FloatyBox : MonoBehaviour
     private bool fallGrace = false; // grace period before allowing fall
 
     Rigidbody2D _rigidbody;
-
-    public GameObject spearPrefab;
-    public int spearForce = 800;
-    public Transform spearPos;
-
-    public GameObject swordPrefab;
-    public Transform swordPos;
-
-    public bool weaponType = false;
-
-    private bool cast = true;
     void Start()
     {
         _rigidbody = GetComponent<Rigidbody2D>();
@@ -72,68 +61,8 @@ public class FloatyBox : MonoBehaviour
                         StartCoroutine(resetFall(.2f));
                     }
                 }
-                /*
-                else
-                {
-                    // move
-                    int sign = (touch.deltaPosition.x > 0) ? 1 : -1;
-                    _rigidbody.AddForce(sign * Vector2.right * moveForce);
-                }*/
             }
-            else if (Input.touchCount == 1)
-            {
-                if (cast)
-                {
-                    if (weaponType == true)
-                    {
-                        GameObject newSword = Instantiate(swordPrefab, swordPos.position, Quaternion.identity);
-                    }
-                    else
-                    {
-                        GameObject newSpear = Instantiate(spearPrefab, spearPos.position, Quaternion.identity);
-                        newSpear.GetComponent<Rigidbody2D>().AddForce(new Vector2(spearForce * transform.localScale.x, 0));
-                    } 
-                    cast = false;
-                    //StartCoroutine(coolDown(2));
-                }
-
-            }
-            else if (Input.touchCount == 2)
-            {
-                GameObject newSword = Instantiate(swordPrefab, swordPos.position, Quaternion.identity);
-                newSword.GetComponent<Rigidbody2D>().AddForce(new Vector2(0,0));
-                    //newSpear.GetComponent<Rigidbody2D>().AddForce(new Vector2(swordForce * transform.localScale.x, 0));
-                    //cast = false;
-                    //StartCoroutine(coolDown(2));
-
-            }
-            /*
-            else if (touch.phase == TouchPhase.Stationary)
-            {
-                if (cast)
-                {
-                    GameObject newSpear = Instantiate(spearPrefab, spearPos.position, Quaternion.identity);
-                    newSpear.GetComponent<Rigidbody2D>().AddForce(new Vector2(spearForce * transform.localScale.x, 0));
-                    cast = false;
-                    //StartCoroutine(coolDown(2));
-                }
-
-            }*/
-            /*
-            StartCoroutine(coolDown(2));
-            if (Input.GetButtonDown("Fire2"))
-            {
-                GameObject newSpear = Instantiate(spearPrefab, spearPos.position, Quaternion.identity);
-                newSpear.GetComponent<Rigidbody2D>().AddForce(new Vector2(spearForce * transform.localScale.x, 0));
-            }*/
-        }
-    }
-
-    public IEnumerator coolDown(float time)
-    {
-        cast = false;
-        yield return new WaitForSeconds(time);// * Time.deltaTime);
-        cast = true;
+        } // for
     }
 
     // resets jump grace period
