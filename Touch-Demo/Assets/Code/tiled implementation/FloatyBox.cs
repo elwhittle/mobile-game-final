@@ -13,7 +13,7 @@ public class FloatyBox : MonoBehaviour
     public LayerMask groundLayer;
     public Transform feet;
 
-    public FloatingJoystick joystick;
+    public VariableJoystick joystick;
 
     private bool grounded = false;  // touching ground?
     private bool seenJump = false;  // indicates whether a jump has happened - used to avoid multiple jump touch strokes during liftoff
@@ -29,7 +29,11 @@ public class FloatyBox : MonoBehaviour
     {
         // move
         float xSpeed = joystick.Horizontal * moveSpeed;
-        _rigidbody.velocity = new Vector2(xSpeed, _rigidbody.velocity.y);
+
+        if (Mathf.Abs(xSpeed) > 0.001f)
+        {
+            _rigidbody.velocity = new Vector2(xSpeed, _rigidbody.velocity.y);
+        }
 
         for (int i = 0; i < Input.touchCount; ++i)
         {
@@ -64,6 +68,17 @@ public class FloatyBox : MonoBehaviour
             }
         } // for
     }
+
+    // jump on enemy
+    private void OnTriggerEnter2D(Collider2D other)
+    {
+        if (other.gameObject.CompareTag("enemy"))
+        {
+            Destroy(other.gameObject);
+            _rigidbody.velocity = new Vector2(_rigidbody.velocity.x, -_rigidbody.velocity.y);
+        }
+    }
+
 
     // resets jump grace period
     public IEnumerator resetJump(float wait)
