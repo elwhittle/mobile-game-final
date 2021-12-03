@@ -6,6 +6,8 @@ public class Combo_Player : MonoBehaviour
 {
     public int moveSpeed; // how fast to move
 
+    public ComboDisplay head;
+
     private float touchDeadZone = 10;
     public float jumpForce;
     public float fallForce;
@@ -26,6 +28,7 @@ public class Combo_Player : MonoBehaviour
 
     void Start()
     {
+        head = GetComponent<ComboDisplay>();
         _rigidbody = GetComponent<Rigidbody2D>();
     }
 
@@ -87,18 +90,35 @@ public class Combo_Player : MonoBehaviour
         }
         else
         {
+            // if there was a change in grounded
+            // if landed, end combo
+            if (grounded) {
+                print(PublicVars.comboCount.ToString());
+                PublicVars.comboCount = 0;
+                head.updateCombo();
+            }
             canJump = grounded;
         }
 
         if (grounded) 
         {
-            slamming = false; 
+            slamming = false;
+        }
+
+        // TODO possible pivot
+        if (!PublicVars.useGravity)
+        {
+            if (canJump)
+            {
+                jumping = true;
+            }
         }
 
         // handle touches
-        if (Input.touchCount > 0)
+        int touchCount = Input.touchCount;
+        if (touchCount > 0)
         {
-            for (int i = 0; i < Input.touchCount; ++i)
+            for (int i = 0; i < touchCount; ++i)
             {
                 handleTouch(i);
             } // for each touch
@@ -121,6 +141,9 @@ public class Combo_Player : MonoBehaviour
     {
         if (other.gameObject.CompareTag("enemy"))
         {
+            // display combo count
+            ++PublicVars.comboCount;
+            head.updateCombo();
             Destroy(other.gameObject);
             StartCoroutine(jumpTime(.2f));
             if (slamming)
@@ -135,7 +158,6 @@ public class Combo_Player : MonoBehaviour
             StartCoroutine(jumpGrace(.1f));
         } // if landing on an enemy
     }
-
 
     // resets jump grace period
     public IEnumerator jumpTime(float wait)
