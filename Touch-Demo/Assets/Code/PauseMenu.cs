@@ -21,6 +21,13 @@ public class PauseMenu : MonoBehaviour
         
     }
 
+    public void RunScene(string sceneName)
+    {
+        Time.timeScale = 1;
+        SceneManager.LoadScene(sceneName);
+        //StartCoroutine(StartTime(.2f));
+    }
+
     public void Pause()
     {
         Time.timeScale = 0;
@@ -36,5 +43,11 @@ public class PauseMenu : MonoBehaviour
     public void ToggleGravity()
     {
         PublicVars.useGravity = !PublicVars.useGravity;
+    }
+
+    private IEnumerator StartTime(float time)
+    {
+        yield return new WaitForSeconds(time);
+        Time.timeScale = 1;
     }
 }
