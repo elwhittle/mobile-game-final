@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class Combo_Player : MonoBehaviour
 {
@@ -14,6 +15,7 @@ public class Combo_Player : MonoBehaviour
 
     public LayerMask groundLayer;
     public Transform feet;
+    public Boots boots;
 
     public VariableJoystick joystick;
 
@@ -24,10 +26,13 @@ public class Combo_Player : MonoBehaviour
 
     private bool jumping = false; // indicates whether jumping
 
+    private int hp;
+
     Rigidbody2D _rigidbody;
 
     void Start()
     {
+        hp = PublicVars.max_hp;
         head = GetComponent<ComboDisplay>();
         _rigidbody = GetComponent<Rigidbody2D>();
     }
@@ -35,7 +40,7 @@ public class Combo_Player : MonoBehaviour
     /**
      * determines how to handle a touch on the right side of the screen
      */
-    void handleTouch(int i)
+    void HandleTouch(int i)
     {
         Touch touch = Input.GetTouch(i);
         if (touch.position.x > Screen.width / 2)
@@ -45,7 +50,7 @@ public class Combo_Player : MonoBehaviour
                 case TouchPhase.Began: // jump if grounded
                     if (canJump)
                     {
-                        StartCoroutine(jumpTime(.2f));
+                        StartCoroutine(JumpTime(.2f));
                         canJump = false;
                     }
                     break;
@@ -60,7 +65,7 @@ public class Combo_Player : MonoBehaviour
                     if (!grounded && canSlam && !slamming && touch.deltaPosition.y < -touchDeadZone)
                     {
                         jumping = false;
-                        StartCoroutine(slamTime(2f));
+                        StartCoroutine(SlamTime(2f));
                     }
                     break;
                 case TouchPhase.Ended: // done with jumping
@@ -120,7 +125,7 @@ public class Combo_Player : MonoBehaviour
         {
             for (int i = 0; i < touchCount; ++i)
             {
-                handleTouch(i);
+                HandleTouch(i);
             } // for each touch
         }
 
@@ -141,26 +146,52 @@ public class Combo_Player : MonoBehaviour
     {
         if (other.gameObject.CompareTag("enemy"))
         {
-            // display combo count
-            ++PublicVars.comboCount;
-            head.updateCombo();
-            Destroy(other.gameObject);
-            StartCoroutine(jumpTime(.2f));
-            if (slamming)
+            if (boots.ByEnemy())
             {
-                _rigidbody.velocity = new Vector2(_rigidbody.velocity.x, fallForce);
-                StartCoroutine(slamGrace(.1f));
+                // display combo count
+                ++PublicVars.comboCount;
+                head.updateCombo();
+                Destroy(other.gameObject);
+                StartCoroutine(JumpTime(.2f));
+                if (slamming)
+                {
+                    _rigidbody.velocity = new Vector2(_rigidbody.velocity.x, fallForce);
+                    StartCoroutine(SlamGrace(.1f));
+                }
+                else
+                {
+                    _rigidbody.velocity = new Vector2(_rigidbody.velocity.x, jumpForce * .3f);
+                }
+                StartCoroutine(JumpGrace(.1f));
             }
             else
             {
-                _rigidbody.velocity = new Vector2(_rigidbody.velocity.x, jumpForce*.3f);
+                print("ouch");
             }
-            StartCoroutine(jumpGrace(.1f));
         } // if landing on an enemy
     }
 
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        if (collision.collider.gameObject.CompareTag("enemy") && !boots.ByEnemy())
+        {
+            print("hit a pain point there");
+            if (--hp <= 0)
+            {
+                Die();
+            }
+        }
+        if (collision.collider.gameObject.CompareTag("pain"))
+        {
+            if (--hp <= 0)
+            {
+                Die();
+            }
+        }
+    }
+
     // resets jump grace period
-    public IEnumerator jumpTime(float wait)
+    public IEnumerator JumpTime(float wait)
     {
         jumping = true;
         yield return new WaitForSeconds(wait);
@@ -168,7 +199,7 @@ public class Combo_Player : MonoBehaviour
     }
 
     // allows for jumping
-    public IEnumerator jumpGrace(float wait)
+    public IEnumerator JumpGrace(float wait)
     {
         jumping = false;
         canJump = true;
@@ -177,18 +208,23 @@ public class Combo_Player : MonoBehaviour
     }
 
     // resets fall grace period
-    public IEnumerator slamTime(float wait)
+    public IEnumerator SlamTime(float wait)
     {
         slamming = true;
         yield return new WaitForSeconds(wait);
         slamming = false;
     }
 
-    public IEnumerator slamGrace(float wait)
+    public IEnumerator SlamGrace(float wait)
     {
         slamming = false;
         canSlam = false;
         yield return new WaitForSeconds(wait);
         canSlam = true;
+    }
+
+    private void Die()
+    {
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 }

@@ -11,4 +11,26 @@ public class Boots : MonoBehaviour
     //        Destroy(collision.collider.gameObject);
     //    }
     //}
+
+    private bool byEnemy = false;
+
+    public bool ByEnemy() { return byEnemy; }
+
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        if (collision.gameObject.CompareTag("enemy"))
+        {
+            byEnemy = true;
+            print("by enemy");
+        }
+    }
+
+    private void OnTriggerExit2D(Collider2D collision)
+    {
+        if (collision.gameObject.CompareTag("enemy"))
+        {
+            byEnemy = false;
+            print("no longer by enemy");
+        }
+    }
 }
