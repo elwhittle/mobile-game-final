@@ -6,6 +6,8 @@ TagManager:
   tags:
   - enemy
   - pain
+  - collectible
+  - goal
   layers:
   - Default
   - TransparentFX

@@ -3,9 +3,11 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-public class Combo_Player : MonoBehaviour
+public class RunPlayer : MonoBehaviour
 {
     public int moveSpeed; // how fast to move
+    public float maxVelocity;
+    public float moveForce = 25;
 
     public ComboDisplay head;
 
@@ -29,6 +31,7 @@ public class Combo_Player : MonoBehaviour
     private bool jumping = false; // indicates whether jumping
 
     private int hp;
+    private bool kicking = false;
 
     Rigidbody2D _rigidbody;
 
@@ -50,8 +53,8 @@ public class Combo_Player : MonoBehaviour
     void HandleTouch(int i)
     {
         Touch touch = Input.GetTouch(i);
-        if (touch.position.x > Screen.width / 2)
-        {
+        //if (touch.position.x > Screen.width / 2)
+        //{
             switch (touch.phase)
             {
                 case TouchPhase.Began: // jump if grounded
@@ -79,7 +82,7 @@ public class Combo_Player : MonoBehaviour
                     jumping = false;
                     break;
             }
-        }
+        //}
     }
 
     void Update()
@@ -90,12 +93,14 @@ public class Combo_Player : MonoBehaviour
         {
             Die();
         }
-        // move
-        float xSpeed = joystick.Horizontal * moveSpeed;
-        //if (Mathf.Abs(xSpeed) > 0.001f)
-        //{
-        _rigidbody.velocity = new Vector2(xSpeed, _rigidbody.velocity.y);
-        //}
+        /* move */
+        //float xSpeed = joystick.Horizontal * moveSpeed;
+        //_rigidbody.velocity = new Vector2(xSpeed, _rigidbody.velocity.y);
+        _rigidbody.AddForce(Vector2.right * moveForce);
+        if (_rigidbody.velocity.x > maxVelocity)
+        {
+            _rigidbody.velocity = new Vector2(maxVelocity, _rigidbody.velocity.y);
+        }
 
         bool lastGrounded = grounded;
         // get ground collision
@@ -242,6 +247,18 @@ public class Combo_Player : MonoBehaviour
         canSlam = false;
         yield return new WaitForSeconds(wait);
         canSlam = true;
+    }
+
+    public void Kick()
+    {
+        kicking = true;
+        transform.eulerAngles = Vector3.forward * 90;
+    }
+
+    public void unkick()
+    {
+        kicking = false;
+        transform.eulerAngles = Vector3.zero;
     }
 
     private void Die()

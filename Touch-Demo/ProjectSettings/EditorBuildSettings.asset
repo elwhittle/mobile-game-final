@@ -9,9 +9,6 @@ EditorBuildSettings:
     path: Assets/Scenes/Start.unity
     guid: a19b7e99bcc574a54af6a9c0781fe8bd
   - enabled: 1
-    path: Assets/Scenes/combos pivot.unity
-    guid: 5d5e32d58d246024b9257d480b207497
-  - enabled: 1
-    path: Assets/Scenes/floaty.unity
-    guid: 0b85f40673bdc3346a48a89ef63bf64d
+    path: Assets/Scenes/runner.unity
+    guid: 175d561c50ba39741a420486c4af68c2
   m_configObjects: {}

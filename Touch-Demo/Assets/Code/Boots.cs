@@ -12,9 +12,9 @@ public class Boots : MonoBehaviour
     //    }
     //}
 
-    private bool byEnemy = false;
+    public bool byEnemy = false;
 
-    public bool ByEnemy() { return byEnemy; }
+    //public bool ByEnemy() { return byEnemy; }
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
