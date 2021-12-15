@@ -18,11 +18,13 @@ public class RunPlayer : MonoBehaviour
     public int deathTreshold = -10;
 
     public LayerMask groundLayer;
+    public LayerMask playerLayer;
     public Transform feet;
     public Boots boots;
 
     public VariableJoystick joystick;
 
+    private bool bootsOnEnemy = false;
     private bool grounded = false;  // touching ground?
     private bool slamming = false; // indicates whether slamming
     private bool canSlam = true;
@@ -31,7 +33,7 @@ public class RunPlayer : MonoBehaviour
     private bool jumping = false; // indicates whether jumping
 
     private int hp;
-    private bool kicking = false;
+    //private bool kicking = false;
 
     Rigidbody2D _rigidbody;
 
@@ -58,12 +60,21 @@ public class RunPlayer : MonoBehaviour
             switch (touch.phase)
             {
                 case TouchPhase.Began: // jump if grounded
-                    if (canJump)
-                    {
-                        StartCoroutine(JumpTime(.2f));
-                        canJump = false;
-                    }
-                    break;
+                    jumping = true;
+                    _rigidbody.gravityScale = -_rigidbody.gravityScale;
+                    transform.localScale *= new Vector2(1, -1);
+                //if (canJump)
+                //{
+                //    jumping = true;
+                //    //StartCoroutine(JumpTime(.2f));
+                //    //canJump = false;
+                //}
+                //else if (!grounded && !kicking) // kick if not
+                //{
+                //    kicking = true;
+                //    transform.eulerAngles = Vector3.forward * 90;
+                //}
+                break;
                 // TODO pivot?
                 //case TouchPhase.Stationary:
                 //    if (canJump)
@@ -74,12 +85,20 @@ public class RunPlayer : MonoBehaviour
                 case TouchPhase.Moved: // slam if swiping down enough
                     if (!grounded && canSlam && !slamming && touch.deltaPosition.y < -touchDeadZone)
                     {
-                        jumping = false;
+                        _rigidbody.gravityScale = Mathf.Abs(_rigidbody.gravityScale);
+                        if (transform.localScale.y < 0)
+                        {
+                            transform.localScale *= new Vector2(1, -1);
+                        }
+                    jumping = false;
                         StartCoroutine(SlamTime(2f));
+                        //kicking = false;
+                        //transform.eulerAngles = Vector3.zero;
+                        //transform.position = new Vector2(transform.position.x, transform.position.y + .5f);
                     }
                     break;
                 case TouchPhase.Ended: // done with jumping
-                    jumping = false;
+                    //jumping = false;
                     break;
             }
         //}
@@ -104,7 +123,7 @@ public class RunPlayer : MonoBehaviour
 
         bool lastGrounded = grounded;
         // get ground collision
-        grounded = Physics2D.OverlapCircle(feet.position, .5f, groundLayer);
+        grounded = Physics2D.OverlapCircle(feet.position, .7f, groundLayer);
 
         if (grounded == lastGrounded)
         {
@@ -124,12 +143,18 @@ public class RunPlayer : MonoBehaviour
         if (grounded) 
         {
             slamming = false;
+            //if (kicking)
+            //{
+            //    kicking = false;
+            //    transform.eulerAngles = Vector3.zero;
+            //    transform.position = new Vector2(transform.position.x, transform.position.y + .5f);
+            //}
         }
 
         // TODO possible pivot
         if (!PublicVars.useGravity)
         {
-            if (canJump)
+            if (canJump && !grounded)
             {
                 jumping = true;
             }
@@ -145,10 +170,10 @@ public class RunPlayer : MonoBehaviour
             } // for each touch
         }
 
-        if (jumping)
-        {
-            _rigidbody.velocity = new Vector2(_rigidbody.velocity.x, jumpForce);
-        }
+        //if (jumping)
+        //{
+        //    _rigidbody.velocity = new Vector2(_rigidbody.velocity.x, jumpForce);
+        //}
 
         if (slamming)
         {
@@ -167,6 +192,11 @@ public class RunPlayer : MonoBehaviour
             {
                 jumping = false;
                 canJump = false;
+                _rigidbody.gravityScale = Mathf.Abs(_rigidbody.gravityScale);
+                if (transform.localScale.y < 0)
+                {
+                    transform.localScale *= new Vector2(1, -1);
+                }
             }
         }
         else if (collision.gameObject.CompareTag("goal"))
@@ -178,7 +208,7 @@ public class RunPlayer : MonoBehaviour
     // jump on enemy or hit pain
     private void OnCollisionEnter2D(Collision2D collision)
     {
-        if (collision.collider.gameObject.CompareTag("enemy"))
+        if (collision.gameObject.CompareTag("enemy"))
         {
             if (boots.byEnemy)
             {
@@ -187,32 +217,39 @@ public class RunPlayer : MonoBehaviour
                 // display combo count
                 head.updateCombo();
                 StartCoroutine(JumpTime(.2f));
-                if (slamming)
-                {
-                    _rigidbody.velocity = new Vector2(_rigidbody.velocity.x, fallForce);
-                    StartCoroutine(SlamGrace(.1f));
-                }
-                else
-                {
-                    _rigidbody.velocity = new Vector2(_rigidbody.velocity.x, jumpForce * .5f);
-                }
-                StartCoroutine(JumpGrace(.1f));
+                // x velocity should bounce?
+                //if (slamming)
+                //{
+                //    _rigidbody.velocity = new Vector2(_rigidbody.velocity.x, fallForce);
+                //    StartCoroutine(SlamGrace(.1f));
+                //}
+                //else //if (kicking)
+                //{
+                //    _rigidbody.velocity = new Vector2(_rigidbody.velocity.x, jumpForce * 2f);
+                //}
+                //StartCoroutine(JumpGrace(.1f));
             }
             else
             {
                 print("hit a pain point there");
+                Vector2 vel = (transform.position - collision.transform.position).normalized * 15f;
+                _rigidbody.velocity = vel;
                 if (--hp <= 0)
                 {
                     Die();
                 }
             }
         }
-        else if (collision.collider.gameObject.CompareTag("pain"))
+        else if (collision.gameObject.CompareTag("pain"))
         {
             if (--hp <= 0)
             {
                 Die();
             }
+        }
+        else if (collision.gameObject.CompareTag("bouncer"))
+        {
+            Destroy(collision.gameObject);
         }
     }
 
@@ -249,17 +286,21 @@ public class RunPlayer : MonoBehaviour
         canSlam = true;
     }
 
-    public void Kick()
-    {
-        kicking = true;
-        transform.eulerAngles = Vector3.forward * 90;
-    }
+    //public void Kick()
+    //{
+    //    kicking = true;
+    //    transform.eulerAngles = Vector3.forward * 90;
+    //}
 
-    public void unkick()
-    {
-        kicking = false;
-        transform.eulerAngles = Vector3.zero;
-    }
+    //public void unkick()
+    //{
+    //    kicking = false;
+    //    transform.eulerAngles = Vector3.zero;
+    //    if(grounded)
+    //    {
+    //        transform.position = new Vector2(transform.position.x, transform.position.y + .5f);
+    //    }
+    //}
 
     private void Die()
     {

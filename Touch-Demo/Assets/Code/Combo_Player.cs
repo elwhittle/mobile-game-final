@@ -196,6 +196,8 @@ public class Combo_Player : MonoBehaviour
             else
             {
                 print("hit a pain point there");
+                Vector2 vel = (transform.position - collision.transform.position).normalized * 15f;
+                _rigidbody.velocity = vel;
                 if (--hp <= 0)
                 {
                     Die();

@@ -8,6 +8,7 @@ TagManager:
   - pain
   - collectible
   - goal
+  - bouncer
   layers:
   - Default
   - TransparentFX

@@ -21,7 +21,6 @@ public class Boots : MonoBehaviour
         if (collision.gameObject.CompareTag("enemy"))
         {
             byEnemy = true;
-            print("by enemy");
         }
     }
 
