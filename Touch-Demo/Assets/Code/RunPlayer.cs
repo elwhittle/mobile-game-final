@@ -5,20 +5,21 @@ using UnityEngine.SceneManagement;
 
 public class RunPlayer : MonoBehaviour
 {
-    public int moveSpeed; // how fast to move
-    public float maxVelocity;
-    public float moveForce = 25;
+    //public int moveSpeed; // how fast to move
+    public float maxVelocity;         // how fast the player can move
+    public float moveForce = 25;      // the force the player moves at
 
-    public ComboDisplay head;
+    public ComboDisplay head;         // to display the combo
 
-    private float touchDeadZone = 10;
-    public float jumpForce;
-    public float fallForce;
+    private float touchDeadZone = 10; // swiping doesn't happen if change is less than the dead zone
+    public float jumpForce;           // added to player when player jumps on enemy
+    public float fallForce;           // for slamming
 
-    public int deathTreshold = -10;
+    public int deathTreshold = -10;   // player cannot go below this height without dying
 
-    public LayerMask groundLayer;
-    public LayerMask playerLayer;
+    public LayerMask groundLayer;     // the ground
+    public LayerMask enemyLayer;
+    public ContactFilter2D enemyFilter;
     public Transform feet;
     public Boots boots;
 
@@ -31,6 +32,10 @@ public class RunPlayer : MonoBehaviour
     private bool canJump = false;
 
     private bool jumping = false; // indicates whether jumping
+
+    private List<Collider2D> results = new List<Collider2D>();
+
+    //private bool byEnemy = false;
 
     private int hp;
     //private bool kicking = false;
@@ -86,11 +91,12 @@ public class RunPlayer : MonoBehaviour
                     if (!grounded && canSlam && !slamming && touch.deltaPosition.y < -touchDeadZone)
                     {
                         _rigidbody.gravityScale = Mathf.Abs(_rigidbody.gravityScale);
-                        if (transform.localScale.y < 0)
+                        if (transform.localScale.y < 0f)
                         {
                             transform.localScale *= new Vector2(1, -1);
                         }
                         jumping = false;
+                        _rigidbody.velocity = new Vector2(_rigidbody.velocity.x, -fallForce);
                         StartCoroutine(SlamTime(.5f));
                         //kicking = false;
                         //transform.eulerAngles = Vector3.zero;
@@ -124,6 +130,8 @@ public class RunPlayer : MonoBehaviour
         bool lastGrounded = grounded;
         // get ground collision
         grounded = Physics2D.OverlapCircle(feet.position, .7f, groundLayer);
+
+        //byEnemy = boots.ByEnemy();
 
         if (grounded == lastGrounded)
         {
@@ -175,10 +183,10 @@ public class RunPlayer : MonoBehaviour
         //    _rigidbody.velocity = new Vector2(_rigidbody.velocity.x, jumpForce);
         //}
 
-        if (slamming)
-        {
-            _rigidbody.velocity = new Vector2(_rigidbody.velocity.x, -fallForce);
-        }
+        //if (slamming)
+        //{
+        //    _rigidbody.velocity = new Vector2(_rigidbody.velocity.x, -fallForce);
+        //}
 
     } // update
 
@@ -210,13 +218,28 @@ public class RunPlayer : MonoBehaviour
     {
         if (collision.gameObject.CompareTag("enemy"))
         {
-            if (boots.byEnemy)
+            int enemies = Physics2D.OverlapCollider(boots.gameObject.GetComponent<CapsuleCollider2D>(), enemyFilter, results);
+            results.Clear();
+            //bool byEnemy = Physics2D.OverlapCircle(feet.position, .65f, enemyLayer);
+            if (enemies > 0)
             {
                 ++PublicVars.comboCount;
-                Destroy(collision.collider.gameObject);
                 // display combo count
                 head.updateCombo();
-                StartCoroutine(JumpTime(.2f));
+                // add bounce to player
+                int scale = transform.position.y > collision.gameObject.transform.position.y ? 1 : -1;
+                if (scale == 1 && slamming)
+                {
+                    _rigidbody.velocity = new Vector2(_rigidbody.velocity.x, fallForce);
+                    slamming = false;
+                    canSlam = true;
+                }
+                else
+                {
+                    _rigidbody.velocity = new Vector2(_rigidbody.velocity.x, jumpForce * 2f * scale);
+                }
+                Destroy(collision.collider.gameObject);
+
                 // x velocity should bounce?
                 //if (slamming)
                 //{
@@ -240,14 +263,14 @@ public class RunPlayer : MonoBehaviour
                 }
             }
         }
-        else if (collision.gameObject.CompareTag("pain"))
+        if (collision.gameObject.CompareTag("pain"))
         {
             if (--hp <= 0)
             {
                 Die();
             }
         }
-        else if (collision.gameObject.CompareTag("bouncer"))
+        if (collision.gameObject.CompareTag("bouncer"))
         {
             Destroy(collision.gameObject);
         }
@@ -285,22 +308,6 @@ public class RunPlayer : MonoBehaviour
         yield return new WaitForSeconds(wait);
         canSlam = true;
     }
-
-    //public void Kick()
-    //{
-    //    kicking = true;
-    //    transform.eulerAngles = Vector3.forward * 90;
-    //}
-
-    //public void unkick()
-    //{
-    //    kicking = false;
-    //    transform.eulerAngles = Vector3.zero;
-    //    if(grounded)
-    //    {
-    //        transform.position = new Vector2(transform.position.x, transform.position.y + .5f);
-    //    }
-    //}
 
     private void Die()
     {

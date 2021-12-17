@@ -41,7 +41,7 @@ GameObject:
   - component: {fileID: 3877887491358002188}
   - component: {fileID: 660171738989500807}
   - component: {fileID: 4129396626873551937}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Square (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -150,7 +150,7 @@ GameObject:
   - component: {fileID: 3400728454749519939}
   - component: {fileID: 9072118589127270267}
   - component: {fileID: 496137016128295390}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Square (2)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -294,4 +294,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a2549b17ae001c347b54bbe533b08d06, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  layouts:
+  - {fileID: 759266613465157927, guid: 2d16da600d41f2943818bb7617b556c7, type: 3}
+  - {fileID: 4563232802013529685, guid: 451996e33c68d7047b7af8301141d6a6, type: 3}
   end: {fileID: 967334084}

@@ -175,7 +175,7 @@ public class Combo_Player : MonoBehaviour
     {
         if (collision.collider.gameObject.CompareTag("enemy"))
         {
-            if (boots.byEnemy)
+            if (false/*boots.ByEnemy()*/) // doesn't matter
             {
                 ++PublicVars.comboCount;
                 Destroy(collision.collider.gameObject);
