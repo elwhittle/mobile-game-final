@@ -111,7 +111,7 @@ public class Combo_Player : MonoBehaviour
             // if landed, end combo
             if (grounded) {
                 PublicVars.comboCount = 0;
-                head.updateCombo();
+                head.UpdateCombo();
             }
             canJump = grounded;
         }
@@ -180,7 +180,7 @@ public class Combo_Player : MonoBehaviour
                 ++PublicVars.comboCount;
                 Destroy(collision.collider.gameObject);
                 // display combo count
-                head.updateCombo();
+                head.UpdateCombo();
                 StartCoroutine(JumpTime(.2f));
                 if (slamming)
                 {

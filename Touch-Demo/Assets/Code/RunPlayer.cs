@@ -112,6 +112,7 @@ public class RunPlayer : MonoBehaviour
 
     void Update()
     {
+
         if (Time.timeScale == 0) { return; }
 
         if (transform.position.y < deathTreshold)
@@ -143,7 +144,7 @@ public class RunPlayer : MonoBehaviour
             // if landed, end combo
             if (grounded) {
                 PublicVars.comboCount = 0;
-                head.updateCombo();
+                head.UpdateCombo();
             }
             canJump = grounded;
         }
@@ -225,7 +226,7 @@ public class RunPlayer : MonoBehaviour
             {
                 ++PublicVars.comboCount;
                 // display combo count
-                head.updateCombo();
+                head.UpdateCombo();
                 // add bounce to player
                 int scale = transform.position.y > collision.gameObject.transform.position.y ? 1 : -1;
                 if (scale == 1 && slamming)

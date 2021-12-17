@@ -7,7 +7,7 @@ public class ComboDisplay : MonoBehaviour
 {
     public TextMesh comboText;
 
-    public void updateCombo()
+    public void UpdateCombo()
     {
         int val = PublicVars.comboCount;
         if (val >= 1)
