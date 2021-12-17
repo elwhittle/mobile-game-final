@@ -9,6 +9,7 @@ TagManager:
   - collectible
   - goal
   - bouncer
+  - start
   layers:
   - Default
   - TransparentFX

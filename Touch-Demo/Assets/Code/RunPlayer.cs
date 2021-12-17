@@ -90,8 +90,8 @@ public class RunPlayer : MonoBehaviour
                         {
                             transform.localScale *= new Vector2(1, -1);
                         }
-                    jumping = false;
-                        StartCoroutine(SlamTime(2f));
+                        jumping = false;
+                        StartCoroutine(SlamTime(.5f));
                         //kicking = false;
                         //transform.eulerAngles = Vector3.zero;
                         //transform.position = new Vector2(transform.position.x, transform.position.y + .5f);
