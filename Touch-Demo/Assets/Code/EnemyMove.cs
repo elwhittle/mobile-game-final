@@ -6,11 +6,13 @@ public class EnemyMove : MonoBehaviour
 {
     private GameObject player;
     private float speed;
+    Rigidbody2D rb;
     // Start is called before the first frame update
     void Start()
     {
         player = GameObject.FindGameObjectWithTag("Player");
-        speed = Random.Range(0f, 10f);
+        speed = Random.Range(30f, 50f);
+        rb = GetComponent<Rigidbody2D>();
     }
 
     // Update is called once per frame
@@ -18,11 +20,13 @@ public class EnemyMove : MonoBehaviour
     {
         if (transform.position.y < player.transform.position.y)
         {
-            transform.position += Vector3.up * speed * Time.deltaTime;
+            rb.velocity = Vector2.up * speed * Time.deltaTime;
+            //transform.position += Vector3.up * speed * Time.deltaTime;
         }
         else
         {
-            transform.position += Vector3.down * speed * Time.deltaTime;
+            rb.velocity = Vector2.down * speed * Time.deltaTime;
+            //transform.position += Vector3.down * speed * Time.deltaTime;
         }
     }
 }

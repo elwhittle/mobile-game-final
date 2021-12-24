@@ -8,13 +8,15 @@ public class WorldMaker : MonoBehaviour
     public GameObject[] parts;
     private Transform nextSpawn;
 
-    private GameObject mostRecentlySpawned;
+    public GameObject mostRecentlySpawned;
 
     // Start is called before the first frame update
     void Start()
     {
-        mostRecentlySpawned = Instantiate(parts[0], GameObject.FindGameObjectWithTag("start").transform);
-        nextSpawn = mostRecentlySpawned.GetComponent<Part>().end;
+        //mostRecentlySpawned = Instantiate(parts[0], GameObject.FindGameObjectWithTag("start").transform);
+        Part p = mostRecentlySpawned.GetComponent<Part>();
+        PublicVars.part = p;
+        nextSpawn = p.end;
     }
 
     // Update is called once per frame
@@ -22,7 +24,9 @@ public class WorldMaker : MonoBehaviour
     {
         if (transform.position.x > nextSpawn.position.x)
         {
-            mostRecentlySpawned = Instantiate(parts[0], nextSpawn, false);
+            mostRecentlySpawned = Instantiate(parts[Random.Range(0, parts.Length)], nextSpawn, false);
+            PublicVars.nextPart = mostRecentlySpawned.GetComponent<Part>();
+            PublicVars.nextPartSet = true;
             nextSpawn = mostRecentlySpawned.GetComponent<Part>().end;
         }
     }

@@ -6,6 +6,9 @@ using UnityEngine.SceneManagement;
 public class RunPlayer : MonoBehaviour
 {
     //public int moveSpeed; // how fast to move
+    public float velIncr;
+    private bool useVelocity = true;
+    private float xVelocity;
     public float maxVelocity;         // how fast the player can move
     public float moveForce = 25;      // the force the player moves at
 
@@ -23,9 +26,12 @@ public class RunPlayer : MonoBehaviour
     public Transform feet;
     public Boots boots;
 
-    public VariableJoystick joystick;
+    public StatsDisplay stats;
 
-    private bool bootsOnEnemy = false;
+    private float snot = 0;
+    public float maxSnot = 400;
+
+    public bool upright = true;
     private bool grounded = false;  // touching ground?
     private bool slamming = false; // indicates whether slamming
     private bool canSlam = true;
@@ -33,25 +39,27 @@ public class RunPlayer : MonoBehaviour
 
     private bool jumping = false; // indicates whether jumping
 
-    private List<Collider2D> results = new List<Collider2D>();
-
-    //private bool byEnemy = false;
-
     private int hp;
-    //private bool kicking = false;
 
     Rigidbody2D _rigidbody;
 
+    public int partsPassed;
+
+    private AudioSource audio;
+
+    public AudioClip sniff;
+
+    
+
     void Start()
     {
+        audio = GetComponent<AudioSource>();
+        xVelocity = maxVelocity;
+        partsPassed = 0;
         hp = PublicVars.max_hp;
         head = GetComponent<ComboDisplay>();
         _rigidbody = GetComponent<Rigidbody2D>();
         transform.position = PublicVars.spawnPos;
-        if (PublicVars.currentGoal != null)
-        {
-            PublicVars.currentGoal.gameObject.SetActive(true);
-        }
     }
 
     /**
@@ -66,37 +74,19 @@ public class RunPlayer : MonoBehaviour
             {
                 case TouchPhase.Began: // jump if grounded
                     jumping = true;
-                    _rigidbody.gravityScale = -_rigidbody.gravityScale;
-                    transform.localScale *= new Vector2(1, -1);
-                //if (canJump)
-                //{
-                //    jumping = true;
-                //    //StartCoroutine(JumpTime(.2f));
-                //    //canJump = false;
-                //}
-                //else if (!grounded && !kicking) // kick if not
-                //{
-                //    kicking = true;
-                //    transform.eulerAngles = Vector3.forward * 90;
-                //}
-                break;
-                // TODO pivot?
-                //case TouchPhase.Stationary:
-                //    if (canJump)
-                //    {
-                //        jumping = true;
-                //    }
-                //    break;
+                    Flip();
+                    break;
                 case TouchPhase.Moved: // slam if swiping down enough
                     if (!grounded && canSlam && !slamming && touch.deltaPosition.y < -touchDeadZone)
                     {
-                        _rigidbody.gravityScale = Mathf.Abs(_rigidbody.gravityScale);
-                        if (transform.localScale.y < 0f)
+                        // flip if not upright
+                        if (!upright)
                         {
-                            transform.localScale *= new Vector2(1, -1);
+                            Flip();
                         }
                         jumping = false;
-                        _rigidbody.velocity = new Vector2(_rigidbody.velocity.x, -fallForce);
+                        StartCoroutine(StopVelocity(.5f));
+                        _rigidbody.velocity = new Vector2(0, -fallForce);
                         StartCoroutine(SlamTime(.5f));
                         //kicking = false;
                         //transform.eulerAngles = Vector3.zero;
@@ -119,10 +109,27 @@ public class RunPlayer : MonoBehaviour
         {
             Die();
         }
+
+        /* set part if needed */
+        if (PublicVars.nextPartSet && transform.position.x > PublicVars.part.end.position.x)
+        {
+            PublicVars.part = PublicVars.nextPart;
+            PublicVars.nextPart = null;
+            PublicVars.nextPartSet = false;
+
+            if (++partsPassed % PublicVars.difficulty == 0)
+            {
+                maxVelocity += velIncr++;
+                xVelocity = maxVelocity;
+            }
+        }
+
         /* move */
-        //float xSpeed = joystick.Horizontal * moveSpeed;
-        //_rigidbody.velocity = new Vector2(xSpeed, _rigidbody.velocity.y);
-        _rigidbody.AddForce(Vector2.right * moveForce);
+        if (useVelocity)
+        {
+            _rigidbody.velocity = new Vector2(xVelocity, _rigidbody.velocity.y);
+        }
+        //_rigidbody.AddForce(Vector2.right * moveForce);
         if (_rigidbody.velocity.x > maxVelocity)
         {
             _rigidbody.velocity = new Vector2(maxVelocity, _rigidbody.velocity.y);
@@ -131,8 +138,6 @@ public class RunPlayer : MonoBehaviour
         bool lastGrounded = grounded;
         // get ground collision
         grounded = Physics2D.OverlapCircle(feet.position, .7f, groundLayer);
-
-        //byEnemy = boots.ByEnemy();
 
         if (grounded == lastGrounded)
         {
@@ -145,6 +150,7 @@ public class RunPlayer : MonoBehaviour
             if (grounded) {
                 PublicVars.comboCount = 0;
                 head.UpdateCombo();
+                useVelocity = true;
             }
             canJump = grounded;
         }
@@ -152,12 +158,6 @@ public class RunPlayer : MonoBehaviour
         if (grounded) 
         {
             slamming = false;
-            //if (kicking)
-            //{
-            //    kicking = false;
-            //    transform.eulerAngles = Vector3.zero;
-            //    transform.position = new Vector2(transform.position.x, transform.position.y + .5f);
-            //}
         }
 
         // TODO possible pivot
@@ -178,25 +178,17 @@ public class RunPlayer : MonoBehaviour
                 HandleTouch(i);
             } // for each touch
         }
-
-        //if (jumping)
-        //{
-        //    _rigidbody.velocity = new Vector2(_rigidbody.velocity.x, jumpForce);
-        //}
-
-        //if (slamming)
-        //{
-        //    _rigidbody.velocity = new Vector2(_rigidbody.velocity.x, -fallForce);
-        //}
-
     } // update
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
         if (collision.gameObject.CompareTag("collectible"))
         {
+            audio.PlayOneShot(sniff);
             Destroy(collision.gameObject);
             ++PublicVars.collectibles;
+            snot += 1f + PublicVars.comboCount;
+            stats.slider.value = snot / maxSnot;
             if (!PublicVars.useGravity)
             {
                 jumping = false;
@@ -208,10 +200,6 @@ public class RunPlayer : MonoBehaviour
                 }
             }
         }
-        else if (collision.gameObject.CompareTag("goal"))
-        {
-            PublicVars.spawnPos = collision.gameObject.GetComponent<Goal>().NextGoal();
-        }
     }
 
     // jump on enemy or hit pain
@@ -219,16 +207,18 @@ public class RunPlayer : MonoBehaviour
     {
         if (collision.gameObject.CompareTag("enemy"))
         {
-            int enemies = Physics2D.OverlapCollider(boots.gameObject.GetComponent<CapsuleCollider2D>(), enemyFilter, results);
-            results.Clear();
-            //bool byEnemy = Physics2D.OverlapCircle(feet.position, .65f, enemyLayer);
-            if (enemies > 0)
+            float enemyThreshold = 0.1f;
+            // if player is above or below enemy (depending on gravity)
+            bool canBop = upright 
+                ? transform.position.y >= collision.gameObject.transform.position.y + enemyThreshold 
+                : transform.position.y <= collision.gameObject.transform.position.y - enemyThreshold;
+            if (canBop)
             {
                 ++PublicVars.comboCount;
                 // display combo count
                 head.UpdateCombo();
                 // add bounce to player
-                int scale = transform.position.y > collision.gameObject.transform.position.y ? 1 : -1;
+                int scale = upright ? 1 : -1;
                 if (scale == 1 && slamming)
                 {
                     _rigidbody.velocity = new Vector2(_rigidbody.velocity.x, fallForce);
@@ -240,58 +230,33 @@ public class RunPlayer : MonoBehaviour
                     _rigidbody.velocity = new Vector2(_rigidbody.velocity.x, jumpForce * 2f * scale);
                 }
                 Destroy(collision.collider.gameObject);
-
-                // x velocity should bounce?
-                //if (slamming)
-                //{
-                //    _rigidbody.velocity = new Vector2(_rigidbody.velocity.x, fallForce);
-                //    StartCoroutine(SlamGrace(.1f));
-                //}
-                //else //if (kicking)
-                //{
-                //    _rigidbody.velocity = new Vector2(_rigidbody.velocity.x, jumpForce * 2f);
-                //}
-                //StartCoroutine(JumpGrace(.1f));
+                useVelocity = true;
             }
             else
             {
                 print("hit a pain point there");
                 Vector2 vel = (transform.position - collision.transform.position).normalized * 15f;
                 _rigidbody.velocity = vel;
-                if (--hp <= 0)
-                {
-                    Die();
-                }
+                TakeDamage();
+                StartCoroutine(StopVelocity(.4f));
             }
         }
         if (collision.gameObject.CompareTag("pain"))
         {
-            if (--hp <= 0)
-            {
-                Die();
-            }
+            TakeDamage();
         }
         if (collision.gameObject.CompareTag("bouncer"))
         {
-            Destroy(collision.gameObject);
+            StartCoroutine(StopVelocity(0.5f));
+            //Destroy(collision.gameObject);
         }
     }
 
-    // resets jump grace period
-    public IEnumerator JumpTime(float wait)
+    private void Flip()
     {
-        jumping = true;
-        yield return new WaitForSeconds(wait);
-        jumping = false;
-    }
-
-    // allows for jumping
-    public IEnumerator JumpGrace(float wait)
-    {
-        jumping = false;
-        canJump = true;
-        yield return new WaitForSeconds(wait);
-        canJump = false;
+        _rigidbody.gravityScale = -_rigidbody.gravityScale;
+        transform.localScale *= new Vector2(1, -1);
+        upright = !upright;
     }
 
     // resets fall grace period
@@ -302,16 +267,24 @@ public class RunPlayer : MonoBehaviour
         slamming = false;
     }
 
-    public IEnumerator SlamGrace(float wait)
+    public IEnumerator StopVelocity(float wait)
     {
-        slamming = false;
-        canSlam = false;
+        useVelocity = false;
         yield return new WaitForSeconds(wait);
-        canSlam = true;
+        useVelocity = true;
+    }
+
+    private void TakeDamage(int damage = 1)
+    {
+        if ((hp -= damage) <= 0)
+        {
+            Die();
+        }
     }
 
     private void Die()
     {
+        PublicVars.comboCount = 0;
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 }
