@@ -285,6 +285,6 @@ public class RunPlayer : MonoBehaviour
     private void Die()
     {
         PublicVars.comboCount = 0;
-        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+        SceneManager.LoadScene("End");
     }
 }
